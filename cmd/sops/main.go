@@ -563,6 +563,10 @@ func main() {
 			Usage: "do not check whether the current version is latest during --version",
 		},
 		cli.StringFlag{
+			Name:  "path",
+			Usage: "use the given file path to find matching config entries.",
+		},
+		cli.StringFlag{
 			Name:   "kms, k",
 			Usage:  "comma separated list of KMS ARNs",
 			EnvVar: "SOPS_KMS_ARN",
@@ -734,11 +738,16 @@ func main() {
 			}
 		}
 
+		assumeFileName := fileName
+		if c.String("path") != "" {
+			assumeFileName = c.String("path")
+		}
+
 		unencryptedSuffix := c.String("unencrypted-suffix")
 		encryptedSuffix := c.String("encrypted-suffix")
 		encryptedRegex := c.String("encrypted-regex")
 		unencryptedRegex := c.String("unencrypted-regex")
-		conf, err := loadConfig(c, fileName, nil)
+		conf, err := loadConfig(c, assumeFileName, nil)
 		if err != nil {
 			return toExitError(err)
 		}
@@ -788,12 +797,12 @@ func main() {
 		var output []byte
 		if c.Bool("encrypt") {
 			var groups []sops.KeyGroup
-			groups, err = keyGroups(c, fileName)
+			groups, err = keyGroups(c, assumeFileName)
 			if err != nil {
 				return toExitError(err)
 			}
 			var threshold int
-			threshold, err = shamirThreshold(c, fileName)
+			threshold, err = shamirThreshold(c, assumeFileName)
 			if err != nil {
 				return toExitError(err)
 			}
@@ -943,12 +952,12 @@ func main() {
 			} else {
 				// File doesn't exist, edit the example file instead
 				var groups []sops.KeyGroup
-				groups, err = keyGroups(c, fileName)
+				groups, err = keyGroups(c, assumeFileName)
 				if err != nil {
 					return toExitError(err)
 				}
 				var threshold int
-				threshold, err = shamirThreshold(c, fileName)
+				threshold, err = shamirThreshold(c, assumeFileName)
 				if err != nil {
 					return toExitError(err)
 				}
